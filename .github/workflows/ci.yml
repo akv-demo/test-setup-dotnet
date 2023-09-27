@@ -2,29 +2,46 @@ name: DotNet
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
   push:
-    branches:
-      - main
+    branches: [main]
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
     name: Test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2019, windows-2022]
+        cache: [true, false]
+      fail-fast: false
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - uses: actions/cache@v2
+      - name: Cache NuGet packages
+        if: matrix.cache
+        uses: actions/cache@v2
         with:
-          path: ~/.nuget/packages
+          path: ${{ github.workspace }}/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
+          restore-keys: ${{ runner.os }}-nuget-
 
-      - name: dotnet restore
+      - name: Setup DotNet 6
+        uses: jetersen/setup-dotnet@fix/usePwsh
+        with:
+          dotnet-version: 6.0.x
+
+      - name: DotNet restore
         run: |
-          dotnet restore
+          dotnet new nugetconfig
+          dotnet restore -v n

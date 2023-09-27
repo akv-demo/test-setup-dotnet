@@ -1,10 +1,7 @@
 name: DotNet
 
 on:
-  pull_request:
-    branches: [main]
   push:
-    branches: [main]
 
 env:
   DOTNET_NOLOGO: true
@@ -19,29 +16,38 @@ jobs:
     name: Test
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2019, windows-2022]
-        cache: [true, false]
+        n: [1,2,3,4,5,6,7,8,9,10]
+        #os: [ubuntu-latest, macos-latest, windows-2019, windows-2022]
+        os: [windows-2019, windows-2022]
+        # cache: [true, false]
       fail-fast: false
     steps:
       - name: Checkout
+        if: ${{ false }}
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
       - name: Cache NuGet packages
-        if: matrix.cache
+        # if: matrix.cache
+        if: ${{ false }}
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
           restore-keys: ${{ runner.os }}-nuget-
 
-      - name: Setup DotNet 6
-        uses: jetersen/setup-dotnet@fix/usePwsh
+      - name: Diag
+        run:
+          dotnet --list-sdks
+
+      - name: Setup DotNet 7.0.308
+        uses: akv-platform/setup-dotnet@main
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 7.0.308
 
       - name: DotNet restore
+        if: ${{ false }}
         run: |
           dotnet new nugetconfig
           dotnet restore -v n
